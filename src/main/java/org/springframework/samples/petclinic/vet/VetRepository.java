@@ -39,21 +39,25 @@ import java.util.Collection;
 public interface VetRepository extends Repository<Vet, Integer>, JpaSpecificationExecutor<Vet> {
 
 	/**
-	 * Retrieve all <code>Vet</code>s from the data store.
+	 * Retrieve all <code>Vet</code>s from the data store. Cache key includes clinic_id
+	 * for multi-tenant isolation.
 	 * @return a <code>Collection</code> of <code>Vet</code>s
 	 */
 	@Transactional(readOnly = true)
-	@Cacheable("vets")
+	@Cacheable(value = "vets",
+			key = "T(org.springframework.samples.petclinic.tenant.TenantContext).getCurrentClinicId()")
 	Collection<Vet> findAll() throws DataAccessException;
 
 	/**
-	 * Retrieve all <code>Vet</code>s from data store in Pages
+	 * Retrieve all <code>Vet</code>s from data store in Pages Cache key includes
+	 * clinic_id for multi-tenant isolation.
 	 * @param pageable
 	 * @return
 	 * @throws DataAccessException
 	 */
 	@Transactional(readOnly = true)
-	@Cacheable("vets")
+	@Cacheable(value = "vets",
+			key = "T(org.springframework.samples.petclinic.tenant.TenantContext).getCurrentClinicId() + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
 	Page<Vet> findAll(Pageable pageable) throws DataAccessException;
 
 }

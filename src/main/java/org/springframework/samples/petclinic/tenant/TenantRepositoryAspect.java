@@ -15,17 +15,29 @@
  */
 package org.springframework.samples.petclinic.tenant;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Component;
 
 /**
  * AOP aspect that automatically applies tenant filtering to repository queries.
- * Intercepts findById methods and applies clinic_id filtering.
+ *
+ * Strategy: - For methods returning single entity/Optional: filter after query by
+ * checking clinic_id - For JpaSpecificationExecutor.findAll(): use Specification to
+ * filter at query level - For custom query methods returning Collection/Page: filter
+ * results after query
  *
  * @author Multi-Tenant Architecture Team
  */
@@ -36,22 +48,14 @@ public class TenantRepositoryAspect {
 	@Around("execution(* org.springframework.data.repository.Repository+.findById(..))")
 	public Object filterFindById(ProceedingJoinPoint joinPoint) throws Throwable {
 		Object result = joinPoint.proceed();
-
 		Integer currentClinicId = TenantContext.getCurrentClinicId();
+
 		if (currentClinicId == null) {
 			return result;
 		}
 
 		if (result instanceof Optional<?> optional) {
-			if (optional.isPresent()) {
-				Object entity = optional.get();
-				if (entity instanceof TenantAware tenantAware) {
-					Integer entityClinicId = tenantAware.getClinicId();
-					if (entityClinicId != null && !entityClinicId.equals(currentClinicId)) {
-						return Optional.empty();
-					}
-				}
-			}
+			return optional.filter(this::belongsToCurrentClinic);
 		}
 		else if (result instanceof TenantAware tenantAware) {
 			Integer entityClinicId = tenantAware.getClinicId();
@@ -63,41 +67,93 @@ public class TenantRepositoryAspect {
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
-	@Around("execution(* org.springframework.data.jpa.repository.JpaSpecificationExecutor+.findAll(..)) && args(pageable)")
-	public Object filterFindAllWithPageable(ProceedingJoinPoint joinPoint,
-			org.springframework.data.domain.Pageable pageable) throws Throwable {
+	@Around("execution(* org.springframework.data.jpa.repository.JpaSpecificationExecutor+.findAll(..))")
+	public Object filterFindAllWithSpecificationExecutor(ProceedingJoinPoint joinPoint) throws Throwable {
 		Integer currentClinicId = TenantContext.getCurrentClinicId();
+
 		if (currentClinicId == null) {
 			return joinPoint.proceed();
 		}
 
 		Object target = joinPoint.getTarget();
-		if (target instanceof org.springframework.data.jpa.repository.JpaSpecificationExecutor<?> executor) {
+		Object[] args = joinPoint.getArgs();
+
+		if (target instanceof JpaSpecificationExecutor<?> executor) {
 			@SuppressWarnings("rawtypes")
 			Specification spec = TenantSpecifications.byCurrentClinic();
-			return executor.findAll(spec, pageable);
+
+			if (args.length == 0) {
+				return executor.findAll(spec);
+			}
+			else if (args.length == 1 && args[0] instanceof Pageable pageable) {
+				return executor.findAll(spec, pageable);
+			}
 		}
 
 		return joinPoint.proceed();
 	}
 
-	@SuppressWarnings("unchecked")
-	@Around("execution(* org.springframework.data.jpa.repository.JpaSpecificationExecutor+.findAll())")
-	public Object filterFindAll(ProceedingJoinPoint joinPoint) throws Throwable {
+	@Around("execution(public * org.springframework.data.repository.Repository+.*(..)) "
+			+ "&& !execution(* org.springframework.data.repository.Repository+.findById(..)) "
+			+ "&& !execution(* org.springframework.data.jpa.repository.JpaSpecificationExecutor+.findAll(..))")
+	public Object filterAllRepositoryQueries(ProceedingJoinPoint joinPoint) throws Throwable {
+		Object result = joinPoint.proceed();
+		Integer currentClinicId = TenantContext.getCurrentClinicId();
+
+		if (currentClinicId == null) {
+			return result;
+		}
+
+		return filterResult(result, currentClinicId);
+	}
+
+	private Object filterResult(Object result, Integer currentClinicId) {
+		if (result == null) {
+			return null;
+		}
+
+		if (result instanceof Optional<?> optional) {
+			return optional.filter(this::belongsToCurrentClinic);
+		}
+
+		if (result instanceof Page<?> page) {
+			List<?> filteredContent = page.getContent()
+				.stream()
+				.filter(this::belongsToCurrentClinic)
+				.collect(Collectors.toList());
+			return new PageImpl<>(filteredContent, page.getPageable(), filteredContent.size());
+		}
+
+		if (result instanceof List<?> list) {
+			return list.stream().filter(this::belongsToCurrentClinic).collect(Collectors.toCollection(ArrayList::new));
+		}
+
+		if (result instanceof Collection<?> collection) {
+			return collection.stream().filter(this::belongsToCurrentClinic).collect(Collectors.toList());
+		}
+
+		if (result instanceof TenantAware tenantAware) {
+			Integer entityClinicId = tenantAware.getClinicId();
+			if (entityClinicId != null && !entityClinicId.equals(TenantContext.getCurrentClinicId())) {
+				return null;
+			}
+		}
+
+		return result;
+	}
+
+	private boolean belongsToCurrentClinic(Object entity) {
 		Integer currentClinicId = TenantContext.getCurrentClinicId();
 		if (currentClinicId == null) {
-			return joinPoint.proceed();
+			return true;
 		}
 
-		Object target = joinPoint.getTarget();
-		if (target instanceof org.springframework.data.jpa.repository.JpaSpecificationExecutor<?> executor) {
-			@SuppressWarnings("rawtypes")
-			Specification spec = TenantSpecifications.byCurrentClinic();
-			return executor.findAll(spec);
+		if (entity instanceof TenantAware tenantAware) {
+			Integer entityClinicId = tenantAware.getClinicId();
+			return entityClinicId == null || entityClinicId.equals(currentClinicId);
 		}
 
-		return joinPoint.proceed();
+		return true;
 	}
 
 }
