@@ -17,6 +17,11 @@ package org.springframework.samples.petclinic.model;
 
 import java.io.Serializable;
 
+import org.springframework.samples.petclinic.tenant.TenantAware;
+import org.springframework.samples.petclinic.tenant.TenantEntityListener;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,13 +33,18 @@ import jakarta.persistence.MappedSuperclass;
  *
  * @author Ken Krebs
  * @author Juergen Hoeller
+ * @author Multi-Tenant Architecture Team
  */
 @MappedSuperclass
-public class BaseEntity implements Serializable {
+@EntityListeners(TenantEntityListener.class)
+public class BaseEntity implements Serializable, TenantAware {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
+
+	@Column(name = "clinic_id")
+	private Integer clinicId;
 
 	public Integer getId() {
 		return id;
@@ -42,6 +52,16 @@ public class BaseEntity implements Serializable {
 
 	public void setId(Integer id) {
 		this.id = id;
+	}
+
+	@Override
+	public Integer getClinicId() {
+		return clinicId;
+	}
+
+	@Override
+	public void setClinicId(Integer clinicId) {
+		this.clinicId = clinicId;
 	}
 
 	public boolean isNew() {
