@@ -23,8 +23,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.samples.petclinic.model.NamedEntity;
 import org.springframework.samples.petclinic.model.Person;
+import org.springframework.samples.petclinic.tenant.TenantAware;
+import org.springframework.samples.petclinic.tenant.TenantEntityListener;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -41,8 +45,22 @@ import jakarta.xml.bind.annotation.XmlElement;
  * @author Arjen Poutsma
  */
 @Entity
+@EntityListeners(TenantEntityListener.class)
 @Table(name = "vets")
-public class Vet extends Person {
+public class Vet extends Person implements TenantAware {
+
+	@Column(name = "clinic_id")
+	private Integer clinicId;
+
+	@Override
+	public Integer getClinicId() {
+		return clinicId;
+	}
+
+	@Override
+	public void setClinicId(Integer clinicId) {
+		this.clinicId = clinicId;
+	}
 
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "vet_specialties", joinColumns = @JoinColumn(name = "vet_id"),

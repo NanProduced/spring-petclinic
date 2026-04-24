@@ -21,11 +21,14 @@ import java.util.Objects;
 
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.samples.petclinic.model.Person;
+import org.springframework.samples.petclinic.tenant.TenantAware;
+import org.springframework.samples.petclinic.tenant.TenantEntityListener;
 import org.springframework.util.Assert;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
@@ -45,8 +48,9 @@ import jakarta.validation.constraints.NotBlank;
  * @author Wick Dynex
  */
 @Entity
+@EntityListeners(TenantEntityListener.class)
 @Table(name = "owners")
-public class Owner extends Person {
+public class Owner extends Person implements TenantAware {
 
 	@Column
 	@NotBlank
@@ -61,10 +65,23 @@ public class Owner extends Person {
 	@Pattern(regexp = "\\d{10}", message = "{telephone.invalid}")
 	private String telephone;
 
+	@Column(name = "clinic_id")
+	private Integer clinicId;
+
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	@JoinColumn(name = "owner_id")
 	@OrderBy("name")
 	private final List<Pet> pets = new ArrayList<>();
+
+	@Override
+	public Integer getClinicId() {
+		return clinicId;
+	}
+
+	@Override
+	public void setClinicId(Integer clinicId) {
+		this.clinicId = clinicId;
+	}
 
 	public String getAddress() {
 		return this.address;
