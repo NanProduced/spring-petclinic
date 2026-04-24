@@ -26,11 +26,15 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+
+import org.springframework.samples.petclinic.security.User;
 
 /**
  * Servlet filter that initializes and cleans up the tenant context for each request.
- * Extracts clinic_id from request header or security context.
+ * Extracts clinic_id from Spring Security context first, then from request header.
  *
  * @author Multi-Tenant Architecture Team
  */
@@ -44,24 +48,40 @@ public class TenantContextFilter implements Filter {
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
 		try {
-			HttpServletRequest httpRequest = (HttpServletRequest) request;
-			String clinicIdHeader = httpRequest.getHeader(CLINIC_ID_HEADER);
-
-			if (clinicIdHeader != null && !clinicIdHeader.isEmpty()) {
-				try {
-					Integer clinicId = Integer.parseInt(clinicIdHeader);
-					TenantContext.setCurrentClinicId(clinicId);
-				}
-				catch (NumberFormatException e) {
-					TenantContext.clear();
-				}
-			}
-
+			setupTenantContext((HttpServletRequest) request);
 			chain.doFilter(request, response);
 		}
 		finally {
 			TenantContext.clear();
 		}
+	}
+
+	private void setupTenantContext(HttpServletRequest request) {
+		Integer clinicIdFromSecurity = getClinicIdFromSecurityContext();
+		if (clinicIdFromSecurity != null) {
+			TenantContext.setCurrentClinicId(clinicIdFromSecurity);
+			return;
+		}
+
+		String clinicIdHeader = request.getHeader(CLINIC_ID_HEADER);
+		if (clinicIdHeader != null && !clinicIdHeader.isEmpty()) {
+			try {
+				Integer clinicId = Integer.parseInt(clinicIdHeader);
+				TenantContext.setCurrentClinicId(clinicId);
+			}
+			catch (NumberFormatException e) {
+				TenantContext.clear();
+			}
+		}
+	}
+
+	private Integer getClinicIdFromSecurityContext() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication != null && authentication.isAuthenticated()
+				&& authentication.getPrincipal() instanceof User user) {
+			return user.getClinicId();
+		}
+		return null;
 	}
 
 }
