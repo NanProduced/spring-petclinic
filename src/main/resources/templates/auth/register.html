@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'register')}">
+
+<body>
+
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <h2 class="text-center mb-4">Create Account</h2>
+
+      <form th:action="@{/register}" method="post" th:object="${user}" class="form-horizontal">
+        <div class="form-group mb-3">
+          <label class="form-label" for="username">Username</label>
+          <input type="text" id="username" th:field="*{username}" class="form-control" required="required"
+            placeholder="Choose a username" />
+          <span class="text-danger" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Error</span>
+        </div>
+
+        <div class="form-group mb-3">
+          <label class="form-label" for="email">Email</label>
+          <input type="email" id="email" th:field="*{email}" class="form-control" required="required"
+            placeholder="Enter your email" />
+          <span class="text-danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Error</span>
+        </div>
+
+        <div class="form-group mb-3">
+          <label class="form-label" for="password">Password</label>
+          <input type="password" id="password" th:field="*{password}" class="form-control" required="required"
+            placeholder="Create a password (min 6 characters)" />
+          <span class="text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Error</span>
+        </div>
+
+        <div class="form-group mb-3">
+          <label class="form-label" for="confirmPassword">Confirm Password</label>
+          <input type="password" id="confirmPassword" th:field="*{confirmPassword}" class="form-control"
+            required="required" placeholder="Confirm your password" />
+          <span class="text-danger" th:if="${#fields.hasErrors('confirmPassword')}"
+            th:errors="*{confirmPassword}">Error</span>
+        </div>
+
+        <div class="form-group mb-3">
+          <button type="submit" class="btn btn-primary w-100">Create Account</button>
+        </div>
+      </form>
+
+      <div class="text-center">
+        <span class="text-muted">Already have an account?</span>
+        <a th:href="@{/login}" class="text-decoration-none">Sign In</a>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+
+</html>

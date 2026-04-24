@@ -60,6 +60,52 @@
           </li>
 
         </ul>
+
+        <ul class="nav navbar-nav ms-auto">
+          <th:block th:if="${currentUser == null}">
+            <li>
+              <a class="nav-link" th:href="@{/login}">
+                <span class="fa fa-sign-in"></span>
+                <span>Sign In</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" th:href="@{/register}">
+                <span class="fa fa-user-plus"></span>
+                <span>Register</span>
+              </a>
+            </li>
+          </th:block>
+
+          <th:block th:if="${currentUser != null}">
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="fa fa-user-circle"></span>
+                <span th:text="${currentUser.username}">User</span>
+                <span th:if="${isAdmin}" class="badge bg-danger ms-1">Admin</span>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li>
+                  <span class="dropdown-item-text">
+                    <strong th:text="${currentUser.username}">Username</strong><br />
+                    <small class="text-muted" th:text="${currentUser.email}">email@example.com</small>
+                  </span>
+                </li>
+                <li>
+                  <hr class="dropdown-divider" />
+                </li>
+                <li>
+                  <form method="post" th:action="@{/logout}" style="display: inline;">
+                    <button type="submit" class="dropdown-item">
+                      <span class="fa fa-sign-out"></span> Sign Out
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+          </th:block>
+        </ul>
       </div>
     </div>
   </nav>

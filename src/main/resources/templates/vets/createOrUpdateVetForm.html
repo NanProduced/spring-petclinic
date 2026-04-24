@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'vets')}">
+
+<body>
+
+  <h2>
+    <th:block th:if="${vet['new']}">New Veterinarian</th:block>
+    <th:block th:if="${!vet['new']}">Edit Veterinarian</th:block>
+  </h2>
+
+  <form th:object="${vet}"
+    th:action="${vet['new']} ? @{/vets/new} : @{/vets/{id}/edit(id=${vet.id})}" method="post"
+    class="form-horizontal">
+
+    <div th:if="${#fields.hasErrors()}" class="alert alert-danger">
+      <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
+    </div>
+
+    <div class="form-group mb-3">
+      <label class="col-sm-2 control-label">First Name</label>
+      <div class="col-sm-10">
+        <input class="form-control" th:field="*{firstName}" />
+        <span class="help-inline" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}">Error</span>
+      </div>
+    </div>
+
+    <div class="form-group mb-3">
+      <label class="col-sm-2 control-label">Last Name</label>
+      <div class="col-sm-10">
+        <input class="form-control" th:field="*{lastName}" />
+        <span class="help-inline" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}">Error</span>
+      </div>
+    </div>
+
+    <div class="form-group mb-3">
+      <label class="col-sm-2 control-label">Specialties</label>
+      <div class="col-sm-10">
+        <select multiple th:field="*{specialties}" class="form-select" size="4">
+          <option th:each="specialty : ${specialties}" th:value="${specialty.id}"
+            th:text="${specialty.name}">Specialty</option>
+        </select>
+        <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple specialties</small>
+      </div>
+    </div>
+
+    <div class="form-group mb-3">
+      <div class="col-sm-offset-2 col-sm-10">
+        <button class="btn btn-primary" type="submit">
+          <th:block th:if="${vet['new']}">Add Veterinarian</th:block>
+          <th:block th:if="${!vet['new']}">Update Veterinarian</th:block>
+        </button>
+        <a class="btn btn-secondary" th:href="@{/vets.html}">Cancel</a>
+      </div>
+    </div>
+
+  </form>
+
+</body>
+
+</html>
