@@ -85,8 +85,6 @@ public class SecurityConfig {
 				.permitAll()
 				.requestMatchers("/error")
 				.permitAll()
-				.requestMatchers("/vets/**", "/vets.html")
-				.permitAll()
 				.anyRequest()
 				.authenticated())
 			.userDetailsService(userDetailsService)
