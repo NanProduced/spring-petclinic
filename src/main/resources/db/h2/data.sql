@@ -51,3 +51,10 @@ INSERT INTO visits VALUES (default, 7, '2013-01-01', 'rabies shot');
 INSERT INTO visits VALUES (default, 8, '2013-01-02', 'rabies shot');
 INSERT INTO visits VALUES (default, 8, '2013-01-03', 'neutered');
 INSERT INTO visits VALUES (default, 7, '2013-01-04', 'spayed');
+
+INSERT INTO users VALUES (default, 'admin', 'admin@petclinic.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5E', null, null, true);
+INSERT INTO users VALUES (default, 'user', 'user@petclinic.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5E', null, null, true);
+
+INSERT INTO user_roles VALUES (1, 'ADMIN');
+INSERT INTO user_roles VALUES (1, 'USER');
+INSERT INTO user_roles VALUES (2, 'USER');

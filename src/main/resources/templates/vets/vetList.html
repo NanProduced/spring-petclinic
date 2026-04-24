@@ -4,13 +4,21 @@
 
 <body>
 
-  <h2 th:text="#{vets}">Veterinarians</h2>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 th:text="#{vets}">Veterinarians</h2>
+    <div th:if="${isAdmin}">
+      <a class="btn btn-primary" th:href="@{/vets/new}">
+        <span class="fa fa-plus"></span> Add Veterinarian
+      </a>
+    </div>
+  </div>
 
   <table id="vets" class="table table-striped">
     <thead>
       <tr>
         <th th:text="#{name}">Name</th>
         <th th:text="#{specialties}">Specialties</th>
+        <th th:if="${isAdmin}">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -19,6 +27,17 @@
         <td>
           <span th:each="specialty : ${vet.specialties}" th:text="${specialty.name + ' '}" /> <span
             th:if="${vet.nrOfSpecialties == 0}" th:text="#{none}">none</span>
+        </td>
+        <td th:if="${isAdmin}">
+          <a class="btn btn-sm btn-outline-primary" th:href="@{/vets/{id}/edit(id=${vet.id})}">
+            <span class="fa fa-pencil"></span> Edit
+          </a>
+          <form method="post" th:action="@{/vets/{id}/delete(id=${vet.id})}" style="display: inline;"
+            onsubmit="return confirm('Are you sure you want to delete this veterinarian?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <span class="fa fa-trash"></span> Delete
+            </button>
+          </form>
         </td>
       </tr>
     </tbody>
