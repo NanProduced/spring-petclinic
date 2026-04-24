@@ -23,9 +23,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import org.springframework.samples.petclinic.model.BaseEntity;
+import org.springframework.samples.petclinic.tenant.TenantAware;
+import org.springframework.samples.petclinic.tenant.TenantEntityListener;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 
@@ -36,8 +39,9 @@ import jakarta.validation.constraints.NotBlank;
  * @author Multi-Tenant Architecture Team
  */
 @Entity
+@EntityListeners(TenantEntityListener.class)
 @Table(name = "users")
-public class User extends BaseEntity implements UserDetails {
+public class User extends BaseEntity implements UserDetails, TenantAware {
 
 	@Column(unique = true)
 	@NotBlank
@@ -57,6 +61,16 @@ public class User extends BaseEntity implements UserDetails {
 	private boolean enabled = true;
 
 	@Override
+	public Integer getClinicId() {
+		return clinicId;
+	}
+
+	@Override
+	public void setClinicId(Integer clinicId) {
+		this.clinicId = clinicId;
+	}
+
+	@Override
 	public String getUsername() {
 		return username;
 	}
@@ -74,16 +88,6 @@ public class User extends BaseEntity implements UserDetails {
 		this.password = password;
 	}
 
-	@Override
-	public Integer getClinicId() {
-		return clinicId;
-	}
-
-	@Override
-	public void setClinicId(Integer clinicId) {
-		this.clinicId = clinicId;
-	}
-
 	public String getRole() {
 		return role;
 	}
@@ -92,6 +96,7 @@ public class User extends BaseEntity implements UserDetails {
 		this.role = role;
 	}
 
+	@Override
 	public boolean isEnabled() {
 		return enabled;
 	}

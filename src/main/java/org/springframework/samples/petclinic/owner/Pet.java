@@ -22,10 +22,13 @@ import java.util.Set;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.samples.petclinic.model.NamedEntity;
+import org.springframework.samples.petclinic.tenant.TenantAware;
+import org.springframework.samples.petclinic.tenant.TenantEntityListener;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -42,8 +45,9 @@ import jakarta.persistence.Table;
  * @author Wick Dynex
  */
 @Entity
+@EntityListeners(TenantEntityListener.class)
 @Table(name = "pets")
-public class Pet extends NamedEntity {
+public class Pet extends NamedEntity implements TenantAware {
 
 	@Column
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
@@ -53,10 +57,23 @@ public class Pet extends NamedEntity {
 	@JoinColumn(name = "type_id")
 	private PetType type;
 
+	@Column(name = "clinic_id")
+	private Integer clinicId;
+
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	@JoinColumn(name = "pet_id")
 	@OrderBy("date ASC")
 	private final Set<Visit> visits = new LinkedHashSet<>();
+
+	@Override
+	public Integer getClinicId() {
+		return clinicId;
+	}
+
+	@Override
+	public void setClinicId(Integer clinicId) {
+		this.clinicId = clinicId;
+	}
 
 	public void setBirthDate(LocalDate birthDate) {
 		this.birthDate = birthDate;

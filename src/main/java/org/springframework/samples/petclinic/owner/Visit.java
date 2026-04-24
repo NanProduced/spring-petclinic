@@ -19,9 +19,12 @@ import java.time.LocalDate;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.samples.petclinic.model.BaseEntity;
+import org.springframework.samples.petclinic.tenant.TenantAware;
+import org.springframework.samples.petclinic.tenant.TenantEntityListener;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 
@@ -32,8 +35,9 @@ import jakarta.validation.constraints.NotBlank;
  * @author Dave Syer
  */
 @Entity
+@EntityListeners(TenantEntityListener.class)
 @Table(name = "visits")
-public class Visit extends BaseEntity {
+public class Visit extends BaseEntity implements TenantAware {
 
 	@Column(name = "visit_date")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
@@ -41,6 +45,19 @@ public class Visit extends BaseEntity {
 
 	@NotBlank
 	private String description;
+
+	@Column(name = "clinic_id")
+	private Integer clinicId;
+
+	@Override
+	public Integer getClinicId() {
+		return clinicId;
+	}
+
+	@Override
+	public void setClinicId(Integer clinicId) {
+		this.clinicId = clinicId;
+	}
 
 	/**
 	 * Creates a new instance of Visit for the current date
